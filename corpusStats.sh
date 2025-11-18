@@ -162,15 +162,28 @@ else
 
 fi
 
+longestWord=$(cat "$inputFile" | tr -cs '[:alpha:]' '\n' | grep -v '^\s*$' | awk '{print length, $0}' | sort -nr | head -1 | awk '{print $2}')
+allWordsLength=$(cat "$inputFile" | tr -cs '[:alpha:]' '\n' | tr -d '\n' | wc -c)
+
+if [[ "$wordCount" -gt 0 ]] ; then
+	avgWordLength=$(echo "scale=2; $allWordsLength / $wordCount" | bc)
+else
+	avgWordLength="0"
+fi
+
+
 echo -e "\nLine count of $inputFile: $lineCount"
 echo "Word count of $inputFile: $wordCount"
 echo "Character count of $inputFile: $charCount"
-echo -e "Word frequency in $inputFile:\n$wordFreq"
+echo -e "\nWord frequency in $inputFile:\n$wordFreq"
 
 mostCommonWordLine=$(echo "$wordFreq" | head -n 1 | awk '{$1=$1;print}')
 mostCommonWord=$(echo "$mostCommonWordLine" | awk '{print $2}')
 mostCommonWordCount=$(echo "$mostCommonWordLine" | awk '{print $1}')
 
-echo -e "\nMost common word: $mostCommonWord ($mostCommonWordCount $(instancesPlural $mostCommonWordCount))\n"
+
+echo -e "\nMost common word in $inputFile: $mostCommonWord ($mostCommonWordCount $(instancesPlural $mostCommonWordCount))"
+echo "Longest word (total characters) in $inputFile: $longestWord (${#longestWord} chars)"
+echo -e "Average word length in $inputFile: $avgWordLength chars\n"
 
 exit 0
