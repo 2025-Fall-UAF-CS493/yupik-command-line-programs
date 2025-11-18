@@ -32,6 +32,7 @@ elif [[ "$#" -eq 2 ]]; then
 else
 	echo "Current function: Prints out corpus stats for a given file."
 	echo "How to use: [Function] [inputFile] [EN/CSY (Optional, defaults to English)]"
+	exit 0
 fi
 
 declare -a yupInstanceList
