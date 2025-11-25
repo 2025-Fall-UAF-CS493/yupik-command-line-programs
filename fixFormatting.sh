@@ -9,8 +9,6 @@ CAYReplacements=("p" "t" "k" "" "q" "" "v" "l" "s" "y" "" "g" "ug (ligature)" "r
 CSYReplacements=("p" "t" "k" "kw" "q" "qw" "v" "l" "z" "y" "r" "g" "w" "gh" "ghw" "f" "ll" "s" "rr" "gg" "w" "gh" "ghw" "h" "m" "n" "ng" "ngw" "ḿ" "ń" "ńg" "ńgw" "i" "u" "e" "a" "" "" "")
 APAReplacements=("p" "t" "k" "kʷ" "q" "qʷ" "v" "l" "z" "y" "ž" "ɣ" "ɣʷ" "ʀ" "ʀʷ" "f" "ł" "s" "š" "x" "xʷ" "X" "Xʷ" "h" "m" "n" "ŋ" "ŋʷ" "m̥" "n̥" "ŋ̥" "ŋ̥ʷ" "i" "u" "ə" "a" "ɨ" "ð" "R̃")
 IPAReplacements=($'p' $'t' $'k' $'k\u02B7' $'q' $'q\u02B7' $'v' $'l' $'z' $'j' $'\u0290' $'\u0263' $'\u0263\u02B7' $'\u0281' $'\u0281\u02B7' $'f' $'\u026C' $'s' $'\u0282' $'x' $'x\u02B7' $'\u03C7' $'X\u02B7' $'h' $'m' $'n' $'\u014B' $'\u014B\u02B7' $'m\u0325' $'n\u0325' $'\u014B\u0325' $'\u014B\u0325\u02B7' $'i' $'u' $'\u0259' $'a' $'\u0268' $'\u00F0' $'\u0274')
-# Index 7: The APA->IPA file from ling. group has 'l' with theta as its unicode. Leaving this here until I can clarify
-# Index 35: The APA->IPA file from ling. group has 'a' with an umlaut in its unicode. Same situation.
 
 function replaceSymbolsInColumn() {
 	local inputFile="$1"
@@ -46,13 +44,67 @@ function replaceSymbolsInColumn() {
         	return 1
 	fi
 
-	for i in $sortedIndices; do
+	riskyChars="" # Chars that are valid English and also Yupik font symbols
+	riskyMap=""
+	
+	for i in "${!fontSymbols[@]}"; do
+		src="${fontSymbols[$i]}"
+		tgt="${cleanupArray[$i]}"
+		
+		if [[ "$src" =~ ^[a-zA-Z]$ ]] && [[ "$src" != "$tgt" ]]; then
+			riskyChars="${riskyChars}${src}"
+			riskyMap="${riskyMap}${src}=${tgt},"
+		fi
+	done
 
+	if [ -n "$riskyChars" ]; then
+		awk -v risky="[$riskyChars]" -v col="$columnNumber" -v mapStr="$riskyMap" '
+		BEGIN {
+			# Parse the mapping string "a=b,c=d," into an array
+			n = split(mapStr, pairs, ",")
+			for (i=1; i<=n; i++) {
+				if (index(pairs[i], "=") > 0) {
+					split(pairs[i], kv, "=")
+					replMap[kv[1]] = kv[2]
+				}
+			}
+		}
+		{
+			for(i=1; i<=NF; i++) {
+				word = $i
+				cleanedWord = word
+				gsub(/^[[:punct:]]+|[[:punct:]]+$/, "", cleanedWord)
+				
+				# Heuristic: 
+				# 1. Word contains a risky char (e.g. "y")
+				# 2. Word consists ONLY of standard letters (no numbers or symbols)
+				# 3. Word is not empty
+				if (cleanedWord ~ risky && cleanedWord ~ /^[a-zA-Z]+$/) {
+					
+					# Generate the "After" preview
+					converted_word = word
+					for (char in replMap) {
+						if (index(word, char) > 0) {
+							gsub(char, replMap[char], converted_word)
+						}
+					}
+
+					print "Line " NR ", Col " col ": Potential English corruption"
+					print "Token:   [" word "] -> [" converted_word "]"
+					print "Context: " $0
+					print ""
+					break
+				}
+			}
+		}' "$targetFile" >> "$errorLog"
+	fi
+
+	for i in $sortedIndices; do
         	local preSymbols=$(sed -e 's/[$\\]/\\&/g' <<<"${fontSymbols[i]}")
         	local postSymbols="${cleanupArray[i]}"
         	postSymbols=$(sed -e 's/[&\\/]/\\&/g' <<<"$postSymbols")
 
-        	sed -i -E "s#$preSymbols#$postSymbols#g" "$targetFile" # Replace current fontSymbols with respective replacement by index
+        	sed -i -E "s#$preSymbols#$postSymbols#g" "$targetFile" # Replacing corresponding font symbols with replacement chars 
     	done
 
 	paste $pasteArgs > "$inputFile"
@@ -62,7 +114,9 @@ function replaceSymbolsInColumn() {
 inputFile="$1"
 
 if [ "$#" -lt 1 ] || [ "$#" -gt 3 ]; then
-	echo "Usage: $0 '[Input File]' '[Output File (Optional)]' '[Cleanup Format (CSY/APA/IPA)]'"
+	echo "Usage: $0 [Input File] [Output File] [Cleanup Format (CSY/CAY/APA/IPA)]"
+	echo "Or: [Input File] [Cleanup Format]; edits input file in-place."
+	echo "Or: just [Input File]; edits input file in-place with defualt CSY cleanup format."
 	echo "Use -t as only parameter to test symbol array sizes."
     	exit 1
 fi
@@ -73,30 +127,60 @@ if [ "$1" == "-t" ]; then
 	exit 0
 fi
 
-if [ "$#" -eq 1 ]; then
+cleanupTypeInput=""
+
+if [ "$#" -eq 1 ]; then # For just inputting a file with no output file or cleanup type
 	outputFile="$inputFile"
-else
+	cleanupTypeInput="CSY"
+	echo "Defaulting to CSY..."
+elif [ "$#" -eq 2 ]; then
+	secondParameter="$2"
+	case ${secondParameter^^} in
+		(IPA|APA|CSY|CAY) # For inputting a file and a cleanup type, but no other output file
+			cleanupTypeInput="$2"
+			outputFile="$inputFile"
+			;;
+		*)
+			cleanupTypeInput="CSY"
+			outputFile="$2"
+			echo "Defaulting to CSY..."
+			;;
+	esac
+elif [ "$#" -eq 3 ]; then # Proper parameters: input file, output file, and cleanup type
 	outputFile="$2"
+	cleanupTypeInput="$3"
 fi
 
-if [ "$#" -eq 3 ]; then
-	cleanupTypeInput="$3"
-	cleanupTypeInput="${cleanupTypeInput^^}"
-	if [ "$cleanupTypeInput" == "IPA" ]; then
+# Make a file that collects errors of English into font symbol replacements
+fileName=$(basename -- "$outputFile")
+extension="${fileName##*.}"
+fileNameBare="${fileName%.*}"
+
+if [[ "$fileName" == "$extension" ]]; then
+    errorLog="${fileName}_alerts"
+else
+    errorLog="${fileNameBare}_alerts.${extension}"
+fi
+
+> "$errorLog"
+
+case ${cleanupTypeInput^^} in
+	IPA)
     		arrayName="IPAReplacements"
-	elif [ "$cleanupTypeInput" == "APA" ]; then
+		;;
+	APA)
 		arrayName="APAReplacements"
-	elif [ "$cleanupTypeInput" == "CAY" ]; then
+		;;
+	CAY)
 		arrayName="CAYReplacements"
-    	else
+		;;
+    	*)
 		arrayName="CSYReplacements"
 		if [ "$cleanupTypeInput" != "CSY" ]; then
 			echo "Defaulting to CSY..."
 		fi
-	fi
-else
-	arrayName="CSYReplacements"
-fi
+		;;
+esac
 
 echo "Option 1: Reformat all of $inputFile into columns, then replace font symbols."
 echo "Option 2: Replace font symbols in specified columns of ALREADY formatted $inputFile."
@@ -117,6 +201,10 @@ if [[ "$formatOption" -eq 2 ]] ; then
     	done
 
 	echo "Done! Check $outputFile"
+	if [ -s "$errorLog" ]; then
+		echo -e "\nWARNING: Potential English text corruption detected."
+		echo "Check '$errorLog' for details."
+	fi
 	exit 0
 
 elif [[ "$formatOption" -lt 1 ]] || [[ "$formatOption" -gt 2 ]]; then
@@ -124,13 +212,14 @@ elif [[ "$formatOption" -lt 1 ]] || [[ "$formatOption" -gt 2 ]]; then
 	exit 1
 fi
 
+# Everything from here on out is only if Option 1 is chosen.
 tempFile="$inputFile.tmp"
 cp "$inputFile" "$tempFile"
 tr -d '\n' < "$tempFile" > "$outputFile"
 rm "$tempFile"
 
 sed -i -E "s/([0-9]+)([A-Z]{2,3}\b)/\1\n\2/g" "$outputFile"
-for langTag in "${abbrvNL[@]}"; do
+for langTag in "${abbrvNL[@]}"; do # Put everything on one line, then newline for every langTag
 	sed -i -E "s/\b($langTag)\b/\n\1/g" "$outputFile";
 done 
 
@@ -162,5 +251,12 @@ awk 'BEGIN { FS=" "; OFS="\t"; currentPage="" }
 echo "Applying symbol replacement to columns 3 and 4..."
 replaceSymbolsInColumn "$outputFile" 3 "$arrayName"
 replaceSymbolsInColumn "$outputFile" 4 "$arrayName" 
+
+if [ -s "$errorLog" ]; then
+	echo "WARNING: Potential English text corruption detected."
+	echo "Please review '$errorLog' for details."
+else
+	echo "No likely English corruption detected."
+fi
 
 exit 0
