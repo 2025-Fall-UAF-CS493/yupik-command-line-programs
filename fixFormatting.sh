@@ -22,7 +22,8 @@ function replaceSymbolsInColumn() {
 	echo "Processing Column $columnNumber with $replacementArrayName..."
 
 	if [ ${#cleanupArray[@]} -eq 0 ]; then
-		echo "Error: Replacement array '$replacementArrayName' is empty." >&2; return 1
+		echo "Error: Replacement array '$replacementArrayName' is empty." >&2;
+		return 1
     	fi
 
 	# Sort by longest font symbols first
@@ -141,10 +142,11 @@ function optionPrompt() {
 inputFile="$1"
 
 if [ "$#" -lt 1 ] || [ "$#" -gt 3 ]; then
+	echo -e "Function: Formats Central Siberian Yupik documents with font symbols.\n"
 	echo "Usage: $0 [Input File] [Output File] [Cleanup Format (CSY/CAY/APA/IPA)]"
 	echo "Or: [Input File] [Cleanup Format]; edits input file in-place."
 	echo "Or: just [Input File]; edits input file in-place with defualt CSY cleanup format."
-	echo "Use -t as only parameter to test symbol array sizes."
+	echo -e "Use -t as only parameter to test symbol array sizes.\n"
     	exit 1
 fi
 
