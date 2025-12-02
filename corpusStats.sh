@@ -31,7 +31,7 @@ elif [[ "$#" -eq 2 ]]; then
 	esac
 else
 	echo "Current function: Prints out corpus stats for a given file."
-	echo "How to use: [Function] [inputFile] [EN/CSY (Optional, defaults to English)]"
+	echo "How to use $0: [Function] [inputFile] [EN/CSY (Optional, defaults to English)]"
 	exit 0
 fi
 
