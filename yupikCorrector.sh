@@ -105,7 +105,8 @@ promptFix() { # Prompts user to fix CSY errors after finding them
 
 
 if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 'inputFile'"
+    echo "Function: Spell-checker for Central Siberian Yupik. Prompts user to modify each potential error found by the program."
+    echo "Usage: $0 [inputFile]"
     exit 1
 fi
 
