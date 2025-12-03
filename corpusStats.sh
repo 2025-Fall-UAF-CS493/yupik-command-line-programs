@@ -30,8 +30,8 @@ elif [[ "$#" -eq 2 ]]; then
 			;;
 	esac
 else
-	echo "Current function: Prints out corpus stats for a given file."
-	echo "How to use $0: [Function] [inputFile] [EN/CSY (Optional, defaults to English)]"
+	echo "Function: Prints out corpus stats for a given file. Gives character/grapheme frequency, line/word/character count, and average word length."
+	echo "Usage: $0 [inputFile] [EN/CSY (Optional, defaults to English)]"
 	exit 0
 fi
 
