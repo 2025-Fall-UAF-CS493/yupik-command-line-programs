@@ -62,7 +62,7 @@ function tokenizeWord() {
 function transDoubling() {
 	local -n inputTokens=$1
 	local length=${#inputTokens[@]}
-	local currentLine=$2
+	# Removed local currentLine=$2
 	
 	for ((i=0; i<length; i++)); do
 		local currSound="${inputTokens[$i]}"
@@ -99,7 +99,8 @@ function transDoubling() {
 		if $shouldDouble; then
 			inputTokens[$i]="$doubledSound"
 			if  [[ ! "$currSound" == "$doubledSound" ]] ; then
-				echo "Undoubled $currSound -> $doubledSound on Line $currentLine." >&2;
+				# Accessed global variable lineNum directly
+				echo "Doubled $currSound -> $doubledSound on Line $lineNum." >&2;
 			fi
 		fi
 	done
@@ -107,15 +108,15 @@ function transDoubling() {
 
 function convertIPA() {
 	local -n tokensToConvert=$1
-	local currentLine=$2
+	# Removed local currentLine=$2
 	local result=""
-	
+
 	for token in "${tokensToConvert[@]}"; do
 		if [[ -n "${CSYIPA[$token]}" ]]; then
 			local IPAchar="${CSYIPA[$token]}"
 			result+="$IPAchar"
 			if [[ ! "$token" == "$IPAchar" ]] ; then
-				echo "Converted $token -> $IPAchar on Line $currentLine." >&2;
+				echo "Converted $token -> $IPAchar on Line $lineNum." >&2;
 			fi
 		else
 			result+="$token"
@@ -158,7 +159,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 	for word in $line; do
 		tokens=()
 		tokenizeWord "$word" tokens
-		transDoubling tokens "$lineNum"
+		transDoubling tokens
 		joinedWord=$(joinTokens tokens)
 		fixedLine+="$joinedWord "
 	done
@@ -175,7 +176,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 	for word in $line; do
 		tokens=()
 		tokenizeWord "$word" tokens
-		converted=$(convertIPA tokens "$lineNum")
+		converted=$(convertIPA tokens)
 		convertedLine+="$converted "
 	done
 	echo "${convertedLine% }" >> "$outputFile"
