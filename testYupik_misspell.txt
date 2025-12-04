@@ -1,0 +1,7 @@
+# Demo .txt for yupikCorrector.sh. Words taken from akuzipik.info dictionary.
+
+kagerghhu # Misspelling of "kagerghu" / "hard crust on snow" in Yupik
+sivtugh # Misspelling of "siftugh-" / "To bury deeply" in Yupik
+kagerghhu # Same as line 1
+sivtugh # Same as line 2
+mughayanwq # Misspelling of "mughayaneq" / "deep soft snow" in Yupik
