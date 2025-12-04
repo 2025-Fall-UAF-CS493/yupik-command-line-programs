@@ -62,7 +62,6 @@ function tokenizeWord() {
 function transDoubling() {
 	local -n inputTokens=$1
 	local length=${#inputTokens[@]}
-	# Removed local currentLine=$2
 	
 	for ((i=0; i<length; i++)); do
 		local currSound="${inputTokens[$i]}"
@@ -99,7 +98,6 @@ function transDoubling() {
 		if $shouldDouble; then
 			inputTokens[$i]="$doubledSound"
 			if  [[ ! "$currSound" == "$doubledSound" ]] ; then
-				# Accessed global variable lineNum directly
 				echo "Doubled $currSound -> $doubledSound on Line $lineNum." >&2;
 			fi
 		fi
@@ -108,7 +106,6 @@ function transDoubling() {
 
 function convertIPA() {
 	local -n tokensToConvert=$1
-	# Removed local currentLine=$2
 	local result=""
 
 	for token in "${tokensToConvert[@]}"; do
@@ -158,12 +155,12 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 	fixedLine=""
 	for word in $line; do
 		tokens=()
-		tokenizeWord "$word" tokens
-		transDoubling tokens
+		tokenizeWord "$word" tokens # Split line into tokens
+		transDoubling tokens # Double Yupik chars/graphemes where applicable
 		joinedWord=$(joinTokens tokens)
 		fixedLine+="$joinedWord "
 	done
-	echo "${fixedLine% }" >> "$transparentFile"
+	echo "${fixedLine% }" >> "$transparentFile" # Temp. file before IPA conversion
 done < "$outputFile"
 
 echo ""
@@ -176,7 +173,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 	for word in $line; do
 		tokens=()
 		tokenizeWord "$word" tokens
-		converted=$(convertIPA tokens)
+		converted=$(convertIPA tokens) # Replace CSYchars with IPAchars in tokens
 		convertedLine+="$converted "
 	done
 	echo "${convertedLine% }" >> "$outputFile"
