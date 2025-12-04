@@ -1,4 +1,5 @@
 Command-line programs for CS F493: Language Reclamation & Technology on St. Lawrence Island; Fall 2025 class at the University of Alaska Fairbanks. By Ian Rodriguez.<br>
+All programs are written in Bash and need to be run in a Shell like Windows Powershell.
 
 *Parameters with an asterisk are optional.
 
