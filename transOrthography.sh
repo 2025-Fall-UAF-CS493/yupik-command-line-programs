@@ -59,7 +59,7 @@ function tokenizeWord() {
 	done
 }
 
-function transUndouble() {
+function transDoubling() {
 	local -n inputTokens=$1
 	local length=${#inputTokens[@]}
 	local currentLine=$2
@@ -158,7 +158,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 	for word in $line; do
 		tokens=()
 		tokenizeWord "$word" tokens
-		transUndouble tokens "$lineNum"
+		transDoubling tokens "$lineNum"
 		joinedWord=$(joinTokens tokens)
 		fixedLine+="$joinedWord "
 	done
