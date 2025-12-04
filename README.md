@@ -20,7 +20,7 @@ Calls promptFix for each instance it finds, allowing user to call Find-and-Repla
 **Function**: Prints out corpus stats for a given file. Gives character/grapheme frequency, line count, word count, character count, and average word length.<br>
 **How to use**: ./corpusStats.sh [inputFile] [EN/CSY*]<br>
 **How it works**: Uses built-in Bash command tools like cat and wc to tell stats about a file. Also counts every instance of each character/grapheme/word in the file and calculates frequency.<br>
-**Notes**: Defaults to English when used. Have to specify CSY, ESS, or Yupik at the end of each cmmand.<br>
+**Notes**: Defaults to English when used. Have to specify CSY, ESS, or Yupik at the end of each command.<br>
 
 *fixFormatting.sh*<br>
 **Function**: Formats Central Siberian Yupik documents with font symbols.<br>
@@ -35,4 +35,4 @@ numbers as font symbols instead of letters. It then runs a second repair sed tha
 *transOrthography.sh*<br>
 **Function**: Enforces transparent orthography for Central Siberian Yupik files with undoubling and IPA.<br>
 **How to use**: ./transOrthography.sh [inputFile] [outputFile*]<br>
-**How it works**: Maps out an associative array between Central Siberian Yupik Latin orthography and IPA symbols, as well as between undoubled and doubled variants of Yupik letters/graphemes. It reads through the input file line-by-line, tokenizes it into words, then enforces transparent orthography through function transUndouble, which checks if the next/previous sound in each token is voiced or unvoiced and doubles accordingly. Next, it calls convertIPA function to use the associative array and replace each sound with IPA where applicable. Each line is written to the output file, and the user is alerted of all the changes in the Shell.<br>
+**How it works**: Maps out an associative array between Central Siberian Yupik Latin orthography and IPA symbols, as well as between undoubled and doubled variants of Yupik letters/graphemes. It reads through the input file line-by-line, tokenizes it into words, then enforces transparent orthography through function transDoubling, which checks if the next/previous sound in each token is voiced or unvoiced and doubles accordingly. Next, it calls convertIPA function to use the associative array and replace each sound with IPA where applicable. Each line is written to the output file, and the user is alerted of all the changes in the Shell.<br>
