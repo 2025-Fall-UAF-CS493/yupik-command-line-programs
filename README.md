@@ -34,6 +34,6 @@ numbers as font symbols instead of letters. It then runs a second repair sed tha
 **Notes**: If outputFile isn't entered, then inputFile will be modified in-place. If symbol cleanup type isn't entered, then it defaults to CSY (Central Siberian Yupik Latin orthography).
 
 *transOrthography.sh*<br>
-**Function**: Enforces transparent orthography for Central Siberian Yupik files with undoubling and IPA.<br>
+**Function**: Enforces transparent orthography for Central Siberian Yupik files with doubling and IPA.<br>
 **How to use**: ./transOrthography.sh [inputFile] [outputFile*]<br>
 **How it works**: Maps out an associative array between Central Siberian Yupik Latin orthography and IPA symbols, as well as between undoubled and doubled variants of Yupik letters/graphemes. It reads through the input file line-by-line, tokenizes it into words, then enforces transparent orthography through function transDoubling, which checks if the next/previous sound in each token is voiced or unvoiced and doubles accordingly. Next, it calls convertIPA function to use the associative array and replace each sound with IPA where applicable. Each line is written to the output file, and the user is alerted of all the changes in the Shell.<br><br>
