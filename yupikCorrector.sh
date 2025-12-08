@@ -41,7 +41,7 @@ voicingPairs=(
 )
 
 # Longest first for comparison
-yupikAlphabet=('ngngw' 'ngng' 'ghhw' 'ghw' 'ghh' 'ngw' 'ng' 'nn' 'mm' 'gg' 'gh' 'll' 'rr' 'wh' 'aa' 'ii' 'uu' 'g' 'l' 'r' 'v' 'z' 'w' 'm' 'n' 'f' 's' 'p' 't' 'k' 'q' 'e' 'a' 'i' 'u')
+yupikAlphabet=('ngngw' 'ngng' 'ghhw' 'ghw' 'ghh' 'ngw' 'ng' 'nn' 'mm' 'gg' 'gh' 'll' 'rr' 'wh' 'aa' 'ii' 'uu' 'g' 'l' 'r' 'v' 'z' 'w' 'm' 'n' 'f' 's' 'p' 't' 'k' 'q' 'y' 'e' 'a' 'i' 'u')
 yupikVowels="^(aa|ii|uu|a|i|u|e|AA|II|UU|A|I|U|E|Aa|Ii|Uu)$"
 
 promptFix() { # Prompts user to fix CSY errors after finding them
@@ -130,17 +130,6 @@ while IFS= read -r line; do
 	for word in $line; do
 		originalWord="$word"
 
-		# Voicing Harmony Checks
-		for rule in "${voicingPairs[@]}"; do
-			searchString=$(echo "$rule" | cut -d':' -f1)
-			replaceString=$(echo "$rule" | cut -d':' -f2)
-
-			if [[ "$word" == *"$searchString"* ]] && [[ -z "${appliedRules[$searchString]}" ]]; then
-				((lingErrors++))
-				promptFix "Voicing Harmony Error" "$word" "$replaceString" "$lineNumber" "$searchString"
-			fi
-		done
-
 		# Tokenize words to check for (C) V (C) format
 		tempWord="$word"
 		tokenList=()
@@ -174,26 +163,36 @@ while IFS= read -r line; do
 				$isConsonant && syllableStructure+="C"
 			fi
 		done
-		
+
+		structureError=false
+
 		if [[ "$syllableStructure" != *"V"* ]] && [ -n "$syllableStructure" ]; then
 			 ((lingErrors++))
 			 promptFix "Missing Vowel (Syllable Violation)" "$word" "" "$lineNumber" "$word"
-		fi
-
-		if [[ "$syllableStructure" == CC* ]]; then
+			 structureError=true
+		elif [[ "$syllableStructure" == CC* ]]; then
 			((lingErrors++))
 			promptFix "Invalid Cluster (Starts with CC)" "$word" "" "$lineNumber" "$word"
-		fi
-
-		if [[ "$syllableStructure" == *CC ]]; then
+			structureError=true
+		elif [[ "$syllableStructure" == *CC ]]; then
 			((lingErrors++))
 			promptFix "Invalid Cluster (Ends with CC)" "$word" "" "$lineNumber" "$word"
-		fi
-
-		if [[ "$syllableStructure" == *CCC* ]]; then
+			structureError=true
+		elif [[ "$syllableStructure" == *CCC* ]]; then
 			((lingErrors++))
 			promptFix "Invalid Cluster (3+ Consonants)" "$word" "" "$lineNumber" "$word"
+			structureError=true
 		fi
+
+		for rule in "${voicingPairs[@]}"; do
+			searchString=$(echo "$rule" | cut -d':' -f1)
+			replaceString=$(echo "$rule" | cut -d':' -f2)
+
+			if [[ "$word" == *"$searchString"* ]] && [[ -z "${appliedRules[$searchString]}" ]]; then
+				((lingErrors++))
+				promptFix "Voicing Harmony Error" "$word" "$replaceString" "$lineNumber" "$searchString"
+			fi
+		done
 
 	done
 done <<< "$fileContent"
